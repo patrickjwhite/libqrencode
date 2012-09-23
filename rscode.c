@@ -29,9 +29,6 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_LIBPTHREAD
-#  include <pthread.h>
-#endif
 
 #include "rscode.h"
 
@@ -44,25 +41,28 @@ typedef unsigned char data_t;
 /**
  * Reed-Solomon codec control block
  */
+
+#define MAX_SYMSIZE 8
+#define MAX_NROOTS 30
+#define MAX_ALPHA_TO (1<<MAX_SYMSIZE)
+#define MAX_INDEX_OF (1<<MAX_SYMSIZE)
+#define MAX_GENPOLY  (MAX_NROOTS + 1)
+
 struct _RS {
-	int mm;              /* Bits per symbol */
-	int nn;              /* Symbols per block (= (1<<mm)-1) */
-	data_t *alpha_to;     /* log lookup table */
-	data_t *index_of;     /* Antilog lookup table */
-	data_t *genpoly;      /* Generator polynomial */
+	int mm;         /* Bits per symbol */
+	int nn;         /* Symbols per block (= (1<<mm)-1) */
+	data_t alpha_to[MAX_ALPHA_TO];     /* log lookup table */
+	data_t index_of[MAX_INDEX_OF];     /* Antilog lookup table */
+	data_t genpoly[MAX_GENPOLY];       /* Generator polynomial */
 	int nroots;     /* Number of generator roots = number of parity symbols */
 	int fcr;        /* First consecutive root, index form */
 	int prim;       /* Primitive element, index form */
 	int iprim;      /* prim-th root of 1, index form */
 	int pad;        /* Padding bytes in shortened block */
 	int gfpoly;
-	struct _RS *next;
 };
 
-static RS *rslist = NULL;
-#ifdef HAVE_LIBPTHREAD
-static pthread_mutex_t rslist_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
+static struct _RS srs; /* 'srs' stands for static-RS */
 
 static inline int modnn(RS *rs, int x){
 	while (x >= rs->nn) {
@@ -110,7 +110,7 @@ static RS *init_rs_char(int symsize, int gfpoly, int fcr, int prim, int nroots, 
 
   int i, j, sr,root,iprim;
 
-  rs = NULL;
+  rs = &srs;
   /* Check parameter ranges */
   if(symsize < 0 || symsize > (int)(8*sizeof(data_t))){
     goto done;
@@ -125,27 +125,9 @@ static RS *init_rs_char(int symsize, int gfpoly, int fcr, int prim, int nroots, 
   if(pad < 0 || pad >= ((1<<symsize) -1 - nroots))
     goto done; /* Too much padding */
 
-  rs = (RS *)calloc(1,sizeof(RS));
-  if(rs == NULL)
-    goto done;
-
   rs->mm = symsize;
   rs->nn = (1<<symsize)-1;
   rs->pad = pad;
-
-  rs->alpha_to = (data_t *)malloc(sizeof(data_t)*(rs->nn+1));
-  if(rs->alpha_to == NULL){
-    free(rs);
-    rs = NULL;
-    goto done;
-  }
-  rs->index_of = (data_t *)malloc(sizeof(data_t)*(rs->nn+1));
-  if(rs->index_of == NULL){
-    free(rs->alpha_to);
-    free(rs);
-    rs = NULL;
-    goto done;
-  }
 
   /* Generate Galois field lookup tables */
   rs->index_of[0] = A0; /* log(zero) = -inf */
@@ -161,22 +143,11 @@ static RS *init_rs_char(int symsize, int gfpoly, int fcr, int prim, int nroots, 
   }
   if(sr != 1){
     /* field generator polynomial is not primitive! */
-    free(rs->alpha_to);
-    free(rs->index_of);
-    free(rs);
     rs = NULL;
     goto done;
   }
 
   /* Form RS code generator polynomial from its roots */
-  rs->genpoly = (data_t *)malloc(sizeof(data_t)*(nroots+1));
-  if(rs->genpoly == NULL){
-    free(rs->alpha_to);
-    free(rs->index_of);
-    free(rs);
-    rs = NULL;
-    goto done;
-  }
   rs->fcr = fcr;
   rs->prim = prim;
   rs->nroots = nroots;
@@ -213,58 +184,10 @@ RS *init_rs(int symsize, int gfpoly, int fcr, int prim, int nroots, int pad)
 {
 	RS *rs;
 
-#ifdef HAVE_LIBPTHREAD
-	pthread_mutex_lock(&rslist_mutex);
-#endif
-	for(rs = rslist; rs != NULL; rs = rs->next) {
-		if(rs->pad != pad) continue;
-		if(rs->nroots != nroots) continue;
-		if(rs->mm != symsize) continue;
-		if(rs->gfpoly != gfpoly) continue;
-		if(rs->fcr != fcr) continue;
-		if(rs->prim != prim) continue;
-
-		goto DONE;
-	}
-
 	rs = init_rs_char(symsize, gfpoly, fcr, prim, nroots, pad);
-	if(rs == NULL) goto DONE;
-	rs->next = rslist;
-	rslist = rs;
+	if(rs == NULL) return NULL;
 
-DONE:
-#ifdef HAVE_LIBPTHREAD
-	pthread_mutex_unlock(&rslist_mutex);
-#endif
-	return rs;
-}
-
-
-void free_rs_char(RS *rs)
-{
-	free(rs->alpha_to);
-	free(rs->index_of);
-	free(rs->genpoly);
-	free(rs);
-}
-
-void free_rs_cache(void)
-{
-	RS *rs, *next;
-
-#ifdef HAVE_LIBPTHREAD
-	pthread_mutex_lock(&rslist_mutex);
-#endif
-	rs = rslist;
-	while(rs != NULL) {
-		next = rs->next;
-		free_rs_char(rs);
-		rs = next;
-	}
-	rslist = NULL;
-#ifdef HAVE_LIBPTHREAD
-	pthread_mutex_unlock(&rslist_mutex);
-#endif
+	return &srs;
 }
 
 /* The guts of the Reed-Solomon encoder, meant to be #included

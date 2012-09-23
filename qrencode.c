@@ -923,5 +923,4 @@ char *QRcode_APIVersionString(void)
 
 void QRcode_clearCache(void)
 {
-	free_rs_cache();
 }
