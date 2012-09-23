@@ -226,9 +226,6 @@ static unsigned char *MQRspec_createFrame(int version)
 
 unsigned char *MQRspec_newFrame(int version)
 {
-	unsigned char *frame;
-	int width;
-
 	if(version < 1 || version > MQRSPEC_VERSION_MAX) return NULL;
 
 	return MQRspec_createFrame(version);

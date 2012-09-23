@@ -508,9 +508,6 @@ static unsigned char *QRspec_createFrame(int version)
 
 unsigned char *QRspec_newFrame(int version)
 {
-	unsigned char *frame;
-	int width;
-
 	if(version < 1 || version > QRSPEC_VERSION_MAX) return NULL;
 
 	return QRspec_createFrame(version);
