@@ -156,11 +156,6 @@ extern unsigned int QRspec_getFormatInfo(int mask, QRecLevel level);
  */
 extern unsigned char *QRspec_newFrame(int version);
 
-/**
- * Clear the frame cache. Typically for debug.
- */
-extern void QRspec_clearCache(void);
-
 /******************************************************************************
  * Mode indicator
  *****************************************************************************/

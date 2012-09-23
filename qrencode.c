@@ -923,7 +923,5 @@ char *QRcode_APIVersionString(void)
 
 void QRcode_clearCache(void)
 {
-	QRspec_clearCache();
-	MQRspec_clearCache();
 	free_rs_cache();
 }

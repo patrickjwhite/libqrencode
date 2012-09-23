@@ -402,7 +402,5 @@ int main(void)
 
 	report();
 
-	QRspec_clearCache();
-
 	return 0;
 }

@@ -146,7 +146,5 @@ int main(void)
 
 	report();
 
-	MQRspec_clearCache();
-
 	return 0;
 }

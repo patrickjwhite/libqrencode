@@ -319,8 +319,6 @@ int main(void)
 	//print_newFrame();
 	test_format();
 
-	QRspec_clearCache();
-
 	report();
 
 	return 0;

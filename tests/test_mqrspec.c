@@ -170,8 +170,6 @@ int main(void)
 	test_format();
 	test_dataLength();
 
-	MQRspec_clearCache();
-
 	report();
 
 	return 0;
