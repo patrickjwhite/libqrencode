@@ -737,6 +737,7 @@ QRcode *QRcode_encodeString8bitMQR(const char *string, int version, QRecLevel le
  * Structured QR-code encoding
  *****************************************************************************/
 
+#if 0
 static QRcode_List *QRcode_List_newEntry(void)
 {
 	QRcode_List *entry;
@@ -781,6 +782,7 @@ int QRcode_List_size(QRcode_List *qrlist)
 
 	return size;
 }
+#endif
 
 #if 0
 static unsigned char QRcode_parity(const char *str, int size)
@@ -796,6 +798,7 @@ static unsigned char QRcode_parity(const char *str, int size)
 }
 #endif
 
+#if 0
 QRcode_List *QRcode_encodeInputStructured(QRinput_Struct *s)
 {
 	QRcode_List *head = NULL;
@@ -898,6 +901,7 @@ QRcode_List *QRcode_encodeStringStructured(const char *string, int version, QRec
 	}
 	return QRcode_encodeDataStructuredReal(strlen(string), (unsigned char *)string, version, level, 0, hint, casesensitive);
 }
+#endif
 
 /******************************************************************************
  * System utilities

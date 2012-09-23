@@ -813,6 +813,7 @@ static void qrencode(const unsigned char *intext, int length, const char *outfil
 	QRcode_free(qrcode);
 }
 
+#if 0
 static QRcode_List *encodeStructured(const unsigned char *intext, int length)
 {
 	QRcode_List *list;
@@ -932,6 +933,7 @@ static void qrencodeStructured(const unsigned char *intext, int length, const ch
 
 	QRcode_List_free(qrlist);
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -1119,7 +1121,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Version must be specified to encode structured symbols.\n");
 			exit(EXIT_FAILURE);
 		}
-		qrencodeStructured(intext, length, outfile);
+//		qrencodeStructured(intext, length, outfile);
 	} else {
 		qrencode(intext, length, outfile);
 	}

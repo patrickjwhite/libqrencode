@@ -459,6 +459,7 @@ void monkey_split_kanji(int loop)
 	}
 }
 
+#if 0
 void test_split_structure(int num)
 {
 	QRinput *input;
@@ -546,6 +547,7 @@ void monkey_split_structure(int loop)
 		test_split_structure(i);
 	}
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -559,7 +561,9 @@ int main(int argc, char **argv)
 	monkey_encode_8(loop);
 	monkey_split_kanji(loop);
 	monkey_encode_kanji(loop);
+#if 0
 	monkey_split_structure(loop);
+#endif
 
 	QRcode_clearCache();
 

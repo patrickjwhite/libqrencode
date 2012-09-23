@@ -546,6 +546,7 @@ void test_invalid_input(void)
 	testFinish();
 }
 
+#if 0
 void test_struct_semilong(void)
 {
 	QRcode_List *codes, *list;
@@ -599,12 +600,13 @@ void test_struct_example(void)
 	testFinish();
 	QRcode_List_free(codes);
 }
+#endif
 
 void test_null_free(void)
 {
 	testStart("Testing free NULL pointers");
 	assert_nothing(QRcode_free(NULL), "Check QRcode_free(NULL).\n");
-	assert_nothing(QRcode_List_free(NULL), "Check QRcode_List_free(NULL).\n");
+//	assert_nothing(QRcode_List_free(NULL), "Check QRcode_List_free(NULL).\n");
 	assert_nothing(QRraw_free(NULL), "Check QRraw_free(NULL).\n");
 	testFinish();
 }
@@ -895,8 +897,10 @@ int main(void)
 	test_01234567();
 	test_invalid_input();
 //	print_01234567();
+#if 0
 	test_struct_example();
 	test_struct_semilong();
+#endif
 	test_null_free();
 	test_qrraw_new();
 	test_mqrraw_new();

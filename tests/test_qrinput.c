@@ -326,6 +326,7 @@ void test_encodeAnNum(void)
 	BitStream_free(bstream);
 }
 
+#if 0
 void test_struct_listop(void)
 {
 	QRinput_Struct *s;
@@ -785,6 +786,7 @@ void test_null_free(void)
 	assert_nothing(QRinput_Struct_free(NULL), "Check QRinput_Struct_free(NULL).\n");
 	testFinish();
 }
+#endif
 
 void test_mqr_new(void)
 {
@@ -955,6 +957,7 @@ int main(void)
 	test_encodeAnNum();
 	test_padding();
 	test_padding2();
+#if 0
 	test_struct_listop();
 	test_insertStructuredAppendHeader();
 	test_insertStructuredAppendHeader_error();
@@ -969,6 +972,7 @@ int main(void)
 	test_parity();
 	test_parity2();
 	test_null_free();
+#endif
 
 	test_mqr_new();
 	test_mqr_setversion();

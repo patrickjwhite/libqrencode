@@ -274,6 +274,7 @@ extern void QRinput_free(QRinput *input);
  */
 extern int QRinput_check(QRencodeMode mode, int size, const unsigned char *data);
 
+#if 0 /* Structured symbols mode is disabled in minimal version. */
 /**
  * Set of QRinput for structured symbols.
  */
@@ -338,6 +339,7 @@ extern QRinput_Struct *QRinput_splitQRinputToStruct(QRinput *input);
  * @throw ENOMEM unable to allocate memory.
  */
 extern int QRinput_Struct_insertStructuredAppendHeaders(QRinput_Struct *s);
+#endif
 
 /**
  * Set FNC1-1st position flag.
@@ -476,7 +478,7 @@ extern void QRcode_free(QRcode *qrcode);
  * @param s
  * @return a singly-linked list of QRcode.
  */
-extern QRcode_List *QRcode_encodeInputStructured(QRinput_Struct *s);
+//extern QRcode_List *QRcode_encodeInputStructured(QRinput_Struct *s);
 
 /**
  * Create structured symbols from the string. The library automatically parses

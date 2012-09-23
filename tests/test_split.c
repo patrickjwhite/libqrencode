@@ -168,53 +168,56 @@ void test_split4(void)
 	testStart("Split test: an and num entries");
 	input = QRinput_new2(0, QR_ECLEVEL_L);
 	Split_splitStringToQRinput(CHUNKA/**/CHUNKB, input, QR_MODE_8, 0);
+	size = inputSize(input);
+	QRinput_free(input);
+
 	i1 = QRinput_new();
 	QRinput_append(i1, QR_MODE_AN, 17, (unsigned char *)CHUNKA/**/CHUNKB);
+	s1 = inputSize(i1);
+	QRinput_free(i1);
 	i2 = QRinput_new();
 	QRinput_append(i2, QR_MODE_AN, 11, (unsigned char *)CHUNKA);
 	QRinput_append(i2, QR_MODE_NUM, 6, (unsigned char *)CHUNKB);
-
-	size = inputSize(input);
-	s1 = inputSize(i1);
 	s2 = inputSize(i2);
-	testEndExp(size == ((s1 < s2)?s1:s2));
-	QRinput_free(input);
-	QRinput_free(i1);
 	QRinput_free(i2);
+
+	testEndExp(size == ((s1 < s2)?s1:s2));
 
 	testStart("Split test: num and an entries");
 	input = QRinput_new2(0, QR_ECLEVEL_L);
 	Split_splitStringToQRinput(CHUNKB/**/CHUNKA, input, QR_MODE_8, 0);
+	size = inputSize(input);
+	QRinput_free(input);
+
 	i1 = QRinput_new();
 	QRinput_append(i1, QR_MODE_AN, 17, (unsigned char *)CHUNKB/**/CHUNKA);
+	s1 = inputSize(i1);
+	QRinput_free(i1);
+
 	i2 = QRinput_new();
 	QRinput_append(i2, QR_MODE_NUM, 6, (unsigned char *)CHUNKB);
 	QRinput_append(i2, QR_MODE_AN, 11, (unsigned char *)CHUNKA);
-
-	size = inputSize(input);
-	s1 = inputSize(i1);
 	s2 = inputSize(i2);
-	testEndExp(size == ((s1 < s2)?s1:s2));
-	QRinput_free(input);
-	QRinput_free(i1);
 	QRinput_free(i2);
+
+	testEndExp(size == ((s1 < s2)?s1:s2));
 
 	testStart("Split test: num and an entries (should be splitted)");
 	input = QRinput_new2(0, QR_ECLEVEL_L);
 	Split_splitStringToQRinput(CHUNKC/**/CHUNKA, input, QR_MODE_8, 0);
+	size = inputSize(input);
 	i1 = QRinput_new();
+	QRinput_free(input);
 	QRinput_append(i1, QR_MODE_AN, 18, (unsigned char *)CHUNKC/**/CHUNKA);
+	s1 = inputSize(i1);
+	QRinput_free(i1);
 	i2 = QRinput_new();
 	QRinput_append(i2, QR_MODE_NUM, 7, (unsigned char *)CHUNKC);
 	QRinput_append(i2, QR_MODE_AN, 11, (unsigned char *)CHUNKA);
-
-	size = inputSize(input);
-	s1 = inputSize(i1);
 	s2 = inputSize(i2);
-	testEndExp(size == ((s1 < s2)?s1:s2));
-	QRinput_free(input);
-	QRinput_free(i1);
 	QRinput_free(i2);
+
+	testEndExp(size == ((s1 < s2)?s1:s2));
 }
 
 void test_split5(void)
