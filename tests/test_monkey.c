@@ -469,12 +469,12 @@ void test_split_structure(int num)
 	QRinput_InputList *il;
 	int version;
 	QRecLevel level;
-	int len, c, i, ret;
+	int c, i, ret;
 
 	version = (int)drand(40) + 1;
 	level = (QRecLevel)drand(4);
 
-	len = fill8bitString();
+	fill8bitString();
 
 	input = QRinput_new2(version, level);
 	if(input == NULL) {
