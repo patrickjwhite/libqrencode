@@ -1140,7 +1140,9 @@ static int QRinput_appendPaddingBit(BitStream *bstream, QRinput *input)
 	if(padlen > 0) {
 		for(i=0; i<padlen; i++) {
 			ret = BitStream_appendNum(bstream, 8, (i&1)?0x11:0xec);
-			if(ret < 0) return ret;
+			if(ret < 0) {
+				return ret;
+			}
 		}
 	}
 
@@ -1201,7 +1203,7 @@ static int QRinput_appendPaddingBitMQR(BitStream *bstream, QRinput *input)
 		termbits = maxbits - maxwords * 8;
 		if(termbits > 0) {
 			ret = BitStream_appendNum(bstream, termbits, 0);
-			if(ret < 0) return ret;;
+			if(ret < 0) return ret;
 		}
 	}
 
