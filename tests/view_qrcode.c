@@ -21,9 +21,6 @@ static int micro = 0;
 static QRecLevel level = QR_ECLEVEL_L;
 static QRencodeMode hint = QR_MODE_8;
 
-static char **textv;
-static int textc;
-
 static const struct option options[] = {
 	{"help"         , no_argument      , NULL, 'h'},
 	{"level"        , required_argument, NULL, 'l'},
@@ -181,90 +178,6 @@ void draw_singleQRcode(QRinput *stream, int mask)
 	QRcode_free(qrcode);
 }
 
-void draw_structuredQRcode(QRinput_Struct *s)
-{
-	int i, w, h, n, x, y;
-	int swidth;
-	QRcode_List *qrcodes, *p;
-
-	qrcodes = QRcode_encodeInputStructured(s);
-	if(qrcodes == NULL) return;
-
-	swidth = (qrcodes->code->width + margin * 2) * size;
-	n = QRcode_List_size(qrcodes);
-	w = (n < 4)?n:4;
-	h = (n - 1) / 4 + 1;
-
-	screen = SDL_SetVideoMode(swidth * w, swidth * h, 32, 0);
-	SDL_FillRect(screen, NULL, 0xffffff);
-
-	p = qrcodes;
-	for(i=0; i<n; i++) {
-		x = (i % 4) * swidth;
-		y = (i / 4) * swidth;
-		draw_QRcode(p->code, x, y);
-		p = p->next;
-	}
-	SDL_Flip(screen);
-	QRcode_List_free(qrcodes);
-}
-
-void draw_structuredQRcodeFromText(int argc, char **argv)
-{
-	QRinput_Struct *s;
-	QRinput *input;
-	int i, ret;
-
-	s = QRinput_Struct_new();
-	if(s == NULL) {
-		fprintf(stderr, "Failed to allocate memory.\n");
-		exit(EXIT_FAILURE);
-	}
-	for(i=0; i<argc; i++) {
-		input = QRinput_new2(version, level);
-		if(input == NULL) {
-			fprintf(stderr, "Failed to allocate memory.\n");
-			exit(EXIT_FAILURE);
-		}
-		if(eightbit) {
-			ret = QRinput_append(input, QR_MODE_8, strlen(argv[i]), (unsigned char *)argv[i]);
-		} else {
-			ret = Split_splitStringToQRinput(argv[i], input, hint, casesensitive);
-		}
-		if(ret < 0) {
-			perror("Encoding the input string");
-			exit(EXIT_FAILURE);
-		}
-		ret = QRinput_Struct_appendInput(s, input);
-		if(ret < 0) {
-			perror("Encoding the input string");
-			exit(EXIT_FAILURE);
-		}
-	}
-	ret = QRinput_Struct_insertStructuredAppendHeaders(s);
-	if(ret < 0) {
-		fprintf(stderr, "Too many inputs.\n");
-	}
-
-	draw_structuredQRcode(s);
-	QRinput_Struct_free(s);
-}
-
-void draw_structuredQRcodeFromQRinput(QRinput *stream)
-{
-	QRinput_Struct *s;
-
-	QRinput_setVersion(stream, version);
-	QRinput_setErrorCorrectionLevel(stream, level);
-	s = QRinput_splitQRinputToStruct(stream);
-	if(s != NULL) {
-		draw_structuredQRcode(s);
-		QRinput_Struct_free(s);
-	} else {
-		fprintf(stderr, "Input data is too large for this setting.\n");
-	}
-}
-
 void view(int mode, QRinput *input)
 {
 	int flag = 1;
@@ -273,20 +186,8 @@ void view(int mode, QRinput *input)
 	int loop;
 
 	while(flag) {
-		if(mode) {
-			draw_structuredQRcodeFromText(textc, textv);
-		} else {
-			if(structured) {
-				draw_structuredQRcodeFromQRinput(input);
-			} else {
-				draw_singleQRcode(input, mask);
-			}
-		}
-		if(mode || structured) {
-			printf("Version %d, Level %c.\n", version, levelChar[level]);
-		} else {
-			printf("Version %d, Level %c, Mask %d.\n", version, levelChar[level], mask);
-		}
+		draw_singleQRcode(input, mask);
+		printf("Version %d, Level %c, Mask %d.\n", version, levelChar[level], mask);
 		loop = 1;
 		while(loop) {
 			usleep(10000);
@@ -393,14 +294,6 @@ void view_simple(const unsigned char *str, int length)
 	view(0, input);
 
 	QRinput_free(input);
-}
-
-void view_multiText(char **argv, int argc)
-{
-	textc = argc;
-	textv = argv;
-
-	view(1, NULL);
 }
 
 int main(int argc, char **argv)
@@ -512,11 +405,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Version number must be greater than 0 to encode structured symbols.\n");
 		exit(EXIT_FAILURE);
 	}
-	if(structured && (argc - optind > 1)) {
-		view_multiText(argv + optind, argc - optind);
-	} else {
-		view_simple(intext, length);
-	}
+	view_simple(intext, length);
 
 	SDL_Quit();
 
