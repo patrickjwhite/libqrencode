@@ -58,7 +58,6 @@ extern void QRraw_free(QRRawCode *raw);
  *****************************************************************************/
 
 typedef struct {
-	int version;
 	int dataLength;
 	int eccLength;
 	unsigned char *datacode;

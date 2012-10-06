@@ -197,12 +197,10 @@ __STATIC void QRraw_free(QRRawCode *raw)
  *****************************************************************************/
 
 typedef struct {
-	int version;
 	int dataLength;
 	int eccLength;
 	unsigned char *datacode;
 	unsigned char *ecccode;
-	RSblock *rsblock;
 	int oddbits;
 	int count;
 } MQRRawCode;
@@ -216,7 +214,6 @@ __STATIC MQRRawCode *MQRraw_new(QRinput *input)
 	raw = (MQRRawCode *)malloc(sizeof(MQRRawCode));
 	if(raw == NULL) return NULL;
 
-	raw->version = input->version;
 	raw->dataLength = MQRspec_getDataLength(input->version, input->level);
 	raw->eccLength = MQRspec_getECCLength(input->version, input->level);
 	raw->oddbits = raw->dataLength * 8 - MQRspec_getDataLengthBit(input->version, input->level);
@@ -232,19 +229,13 @@ __STATIC MQRRawCode *MQRraw_new(QRinput *input)
 		return NULL;
 	}
 
-	raw->rsblock = (RSblock *)calloc(1, sizeof(RSblock));
-	if(raw->rsblock == NULL) {
-		MQRraw_free(raw);
-		return NULL;
-	}
-
 	rs = init_rs(8, 0x11d, 0, 1, raw->eccLength, 255 - raw->dataLength - raw->eccLength);
 	if(rs == NULL) {
 		MQRraw_free(raw);
 		return NULL;
 	}
 
-	RSblock_initBlock(raw->rsblock, raw->dataLength, raw->datacode, raw->eccLength, raw->ecccode, rs);
+	encode_rs_char(rs, raw->datacode, raw->ecccode);
 
 	raw->count = 0;
 
@@ -277,7 +268,6 @@ __STATIC void MQRraw_free(MQRRawCode *raw)
 	if(raw != NULL) {
 		free(raw->datacode);
 		free(raw->ecccode);
-		free(raw->rsblock);
 		free(raw);
 	}
 }
@@ -542,7 +532,7 @@ __STATIC QRcode *QRcode_encodeMaskMQR(QRinput *input, int mask)
 	raw = MQRraw_new(input);
 	if(raw == NULL) return NULL;
 
-	version = raw->version;
+	version = input->version;
 	width = MQRspec_getWidth(version);
 	frame = MQRspec_newFrame(version);
 	if(frame == NULL) {

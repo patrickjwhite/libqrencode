@@ -653,7 +653,6 @@ void test_mqrraw_new(void)
 	raw = MQRraw_new(stream);
 	assert_nonnull(raw, "Failed MQRraw_new().\n");
 	assert_zero(raw->count, "MQRraw.count = %d != 0\n", raw->count);
-	assert_equal(raw->version, 1, "MQRraw.version was not as expected. (%d)\n", raw->version);
 	assert_equal(raw->dataLength, 3, "MQRraw.dataLength was not as expected.\n");
 	assert_equal(raw->eccLength, 2, "MQRraw.eccLength was not as expected.\n");
 	assert_zero(memcmp(raw->datacode, datacode, 3), "Datacode doesn't match.\n");
