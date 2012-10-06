@@ -24,7 +24,7 @@ void test_rscode1(void)
 	QRinput_setErrorCorrectionLevel(stream, QR_ECLEVEL_M);
 	code = QRraw_new(stream);
 
-	testEnd(memcmp(correct + 16, code->rsblock[0].ecc, 10));
+	testEnd(memcmp(correct + 16, code->ecccode, 10));
 	QRinput_free(stream);
 	QRraw_free(code);
 }

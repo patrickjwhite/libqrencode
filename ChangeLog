@@ -1,4 +1,10 @@
 2012.10.05 Kentaro FUKUCHI <kentaro@fukuchi.org>
+	* qrencode.c, qrencode_inner.h:
+	  - RSblock has been eliminated.
+	* tests/test_{qrencode,rs}.c:
+	  - Followed interal API changes.
+
+2012.10.05 Kentaro FUKUCHI <kentaro@fukuchi.org>
 	* qrencode.c:
 	  - FrameFiller is now allocated in stack, not heap.
 	  - MQRRawCode has been simplified.

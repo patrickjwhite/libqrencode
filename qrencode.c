@@ -41,13 +41,6 @@
  *****************************************************************************/
 
 typedef struct {
-	int dataLength;
-	unsigned char *data;
-	int eccLength;
-	unsigned char *ecc;
-} RSblock;
-
-typedef struct {
 	int version;
 	int dataLength;
 	int eccLength;
@@ -55,24 +48,13 @@ typedef struct {
 	unsigned char *ecccode;
 	int b1;
 	int blocks;
-	RSblock *rsblock;
 	int count;
+	int spec[5];
 } QRRawCode;
 
-static void RSblock_initBlock(RSblock *block, int dl, unsigned char *data, int el, unsigned char *ecc)
-{
-	block->dataLength = dl;
-	block->data = data;
-	block->eccLength = el;
-	block->ecc = ecc;
-
-	encode_rs_char(data, ecc);
-}
-
-static int RSblock_init(RSblock *blocks, int spec[5], unsigned char *data, unsigned char *ecc)
+static int RSblock_init(int spec[5], unsigned char *data, unsigned char *ecc)
 {
 	int i, ret;
-	RSblock *block;
 	unsigned char *dp, *ep;
 	int el, dl;
 
@@ -81,14 +63,12 @@ static int RSblock_init(RSblock *blocks, int spec[5], unsigned char *data, unsig
 	ret = init_rs(8, 0x11d, 0, 1, el, 255 - dl - el);
 	if(ret < 0) return -1;
 
-	block = blocks;
 	dp = data;
 	ep = ecc;
 	for(i=0; i<QRspec_rsBlockNum1(spec); i++) {
-		RSblock_initBlock(block, dl, dp, el, ep);
+		encode_rs_char(dp, ep);
 		dp += dl;
 		ep += el;
-		block++;
 	}
 
 	if(QRspec_rsBlockNum2(spec) == 0) return 0;
@@ -98,10 +78,9 @@ static int RSblock_init(RSblock *blocks, int spec[5], unsigned char *data, unsig
 	ret = init_rs(8, 0x11d, 0, 1, el, 255 - dl - el);
 	if(ret < 0) return -1;
 	for(i=0; i<QRspec_rsBlockNum2(spec); i++) {
-		RSblock_initBlock(block, dl, dp, el, ep);
+		encode_rs_char(dp, ep);
 		dp += dl;
 		ep += el;
-		block++;
 	}
 
 	return 0;
@@ -111,7 +90,7 @@ __STATIC void QRraw_free(QRRawCode *raw);
 __STATIC QRRawCode *QRraw_new(QRinput *input)
 {
 	QRRawCode *raw;
-	int spec[5], ret;
+	int ret;
 
 	raw = (QRRawCode *)malloc(sizeof(QRRawCode));
 	if(raw == NULL) return NULL;
@@ -122,12 +101,12 @@ __STATIC QRRawCode *QRraw_new(QRinput *input)
 		return NULL;
 	}
 
-	QRspec_getEccSpec(input->version, input->level, spec);
+	QRspec_getEccSpec(input->version, input->level, raw->spec);
 
 	raw->version = input->version;
-	raw->b1 = QRspec_rsBlockNum1(spec);
-	raw->dataLength = QRspec_rsDataLength(spec);
-	raw->eccLength = QRspec_rsEccLength(spec);
+	raw->b1 = QRspec_rsBlockNum1(raw->spec);
+	raw->dataLength = QRspec_rsDataLength(raw->spec);
+	raw->eccLength = QRspec_rsEccLength(raw->spec);
 	raw->ecccode = (unsigned char *)malloc(raw->eccLength);
 	if(raw->ecccode == NULL) {
 		free(raw->datacode);
@@ -135,13 +114,9 @@ __STATIC QRRawCode *QRraw_new(QRinput *input)
 		return NULL;
 	}
 
-	raw->blocks = QRspec_rsBlockNum(spec);
-	raw->rsblock = (RSblock *)calloc(raw->blocks, sizeof(RSblock));
-	if(raw->rsblock == NULL) {
-		QRraw_free(raw);
-		return NULL;
-	}
-	ret = RSblock_init(raw->rsblock, spec, raw->datacode, raw->ecccode);
+
+	raw->blocks = QRspec_rsBlockNum(raw->spec);
+	ret = RSblock_init(raw->spec, raw->datacode, raw->ecccode);
 	if(ret < 0) {
 		QRraw_free(raw);
 		return NULL;
@@ -162,18 +137,25 @@ __STATIC unsigned char QRraw_getCode(QRRawCode *raw)
 {
 	int col, row;
 	unsigned char ret;
+	int dp;
 
 	if(raw->count < raw->dataLength) {
 		row = raw->count % raw->blocks;
 		col = raw->count / raw->blocks;
-		if(col >= raw->rsblock[0].dataLength) {
+		if(col >= QRspec_rsDataCodes1(raw->spec)) {
 			row += raw->b1;
 		}
-		ret = raw->rsblock[row].data[col];
+		if(row < QRspec_rsBlockNum1(raw->spec)) {
+			dp = QRspec_rsDataCodes1(raw->spec) * row;
+		} else {
+			dp = QRspec_rsDataCodes1(raw->spec) * QRspec_rsBlockNum1(raw->spec)
+			   + QRspec_rsDataCodes2(raw->spec) * (row - QRspec_rsBlockNum1(raw->spec));
+		}
+		ret = raw->datacode[dp + col];
 	} else if(raw->count < raw->dataLength + raw->eccLength) {
 		row = (raw->count - raw->dataLength) % raw->blocks;
 		col = (raw->count - raw->dataLength) / raw->blocks;
-		ret = raw->rsblock[row].ecc[col];
+		ret = raw->ecccode[QRspec_rsEccCodes1(raw->spec) * row + col];
 	} else {
 		return 0;
 	}
@@ -186,7 +168,6 @@ __STATIC void QRraw_free(QRRawCode *raw)
 	if(raw != NULL) {
 		free(raw->datacode);
 		free(raw->ecccode);
-		free(raw->rsblock);
 		free(raw);
 	}
 }
