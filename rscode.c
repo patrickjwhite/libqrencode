@@ -64,27 +64,27 @@ struct _RS {
 
 static struct _RS srs; /* 'srs' stands for static-RS */
 
-static inline int modnn(RS *rs, int x){
-	while (x >= rs->nn) {
-		x -= rs->nn;
-		x = (x >> rs->mm) + (x & rs->nn);
+static inline int modnn(int x){
+	while (x >= srs.nn) {
+		x -= srs.nn;
+		x = (x >> srs.mm) + (x & srs.nn);
 	}
 	return x;
 }
 
 
-#define MODNN(x) modnn(rs,x)
+#define MODNN(x) modnn(x)
 
-#define MM (rs->mm)
-#define NN (rs->nn)
-#define ALPHA_TO (rs->alpha_to) 
-#define INDEX_OF (rs->index_of)
-#define GENPOLY (rs->genpoly)
-#define NROOTS (rs->nroots)
-#define FCR (rs->fcr)
-#define PRIM (rs->prim)
-#define IPRIM (rs->iprim)
-#define PAD (rs->pad)
+#define MM (srs.mm)
+#define NN (srs.nn)
+#define ALPHA_TO (srs.alpha_to) 
+#define INDEX_OF (srs.index_of)
+#define GENPOLY (srs.genpoly)
+#define NROOTS (srs.nroots)
+#define FCR (srs.fcr)
+#define PRIM (srs.prim)
+#define IPRIM (srs.iprim)
+#define PAD (srs.pad)
 #define A0 (NN)
 
 
@@ -96,11 +96,8 @@ static inline int modnn(RS *rs, int x){
  * nroots = RS code generator polynomial degree (number of roots)
  * pad = padding bytes at front of shortened block
  */
-static RS *init_rs_char(int symsize, int gfpoly, int fcr, int prim, int nroots, int pad)
+static int init_rs_char(int symsize, int gfpoly, int fcr, int prim, int nroots, int pad)
 {
-  RS *rs;
-
-
 /* Common code for intializing a Reed-Solomon control block (char or int symbols)
  * Copyright 2004 Phil Karn, KA9Q
  * May be used under the terms of the GNU Lesser General Public License (LGPL)
@@ -110,84 +107,75 @@ static RS *init_rs_char(int symsize, int gfpoly, int fcr, int prim, int nroots, 
 
   int i, j, sr,root,iprim;
 
-  rs = &srs;
   /* Check parameter ranges */
   if(symsize < 0 || symsize > (int)(8*sizeof(data_t))){
-    goto done;
+	  return -1;
   }
 
   if(fcr < 0 || fcr >= (1<<symsize))
-    goto done;
+	  return -1;
   if(prim <= 0 || prim >= (1<<symsize))
-    goto done;
+	  return -1;
   if(nroots < 0 || nroots >= (1<<symsize))
-    goto done; /* Can't have more roots than symbol values! */
+		return -1; /* Can't have more roots than symbol values! */
   if(pad < 0 || pad >= ((1<<symsize) -1 - nroots))
-    goto done; /* Too much padding */
+		return -1; /* Too much padding */
 
-  rs->mm = symsize;
-  rs->nn = (1<<symsize)-1;
-  rs->pad = pad;
+  srs.mm = symsize;
+  srs.nn = (1<<symsize)-1;
+  srs.pad = pad;
 
   /* Generate Galois field lookup tables */
-  rs->index_of[0] = A0; /* log(zero) = -inf */
-  rs->alpha_to[A0] = 0; /* alpha**-inf = 0 */
+  srs.index_of[0] = A0; /* log(zero) = -inf */
+  srs.alpha_to[A0] = 0; /* alpha**-inf = 0 */
   sr = 1;
-  for(i=0;i<rs->nn;i++){
-    rs->index_of[sr] = i;
-    rs->alpha_to[i] = sr;
+  for(i=0;i<srs.nn;i++){
+    srs.index_of[sr] = i;
+    srs.alpha_to[i] = sr;
     sr <<= 1;
     if(sr & (1<<symsize))
       sr ^= gfpoly;
-    sr &= rs->nn;
+    sr &= srs.nn;
   }
   if(sr != 1){
     /* field generator polynomial is not primitive! */
-    rs = NULL;
-    goto done;
+	  return -1;
   }
 
   /* Form RS code generator polynomial from its roots */
-  rs->fcr = fcr;
-  rs->prim = prim;
-  rs->nroots = nroots;
-  rs->gfpoly = gfpoly;
+  srs.fcr = fcr;
+  srs.prim = prim;
+  srs.nroots = nroots;
+  srs.gfpoly = gfpoly;
 
   /* Find prim-th root of 1, used in decoding */
-  for(iprim=1;(iprim % prim) != 0;iprim += rs->nn)
+  for(iprim=1;(iprim % prim) != 0;iprim += srs.nn)
     ;
-  rs->iprim = iprim / prim;
+  srs.iprim = iprim / prim;
 
-  rs->genpoly[0] = 1;
+  srs.genpoly[0] = 1;
   for (i = 0,root=fcr*prim; i < nroots; i++,root += prim) {
-    rs->genpoly[i+1] = 1;
+    srs.genpoly[i+1] = 1;
 
     /* Multiply rs->genpoly[] by  @**(root + x) */
     for (j = i; j > 0; j--){
-      if (rs->genpoly[j] != 0)
-	rs->genpoly[j] = rs->genpoly[j-1] ^ rs->alpha_to[modnn(rs,rs->index_of[rs->genpoly[j]] + root)];
+      if (srs.genpoly[j] != 0)
+	srs.genpoly[j] = srs.genpoly[j-1] ^ srs.alpha_to[modnn(srs.index_of[srs.genpoly[j]] + root)];
       else
-	rs->genpoly[j] = rs->genpoly[j-1];
+	srs.genpoly[j] = srs.genpoly[j-1];
     }
     /* rs->genpoly[0] can never be zero */
-    rs->genpoly[0] = rs->alpha_to[modnn(rs,rs->index_of[rs->genpoly[0]] + root)];
+    srs.genpoly[0] = srs.alpha_to[modnn(srs.index_of[srs.genpoly[0]] + root)];
   }
   /* convert rs->genpoly[] to index form for quicker encoding */
   for (i = 0; i <= nroots; i++)
-    rs->genpoly[i] = rs->index_of[rs->genpoly[i]];
- done:;
-
-  return rs;
+    srs.genpoly[i] = srs.index_of[srs.genpoly[i]];
+  return 0;
 }
 
-RS *init_rs(int symsize, int gfpoly, int fcr, int prim, int nroots, int pad)
+int init_rs(int symsize, int gfpoly, int fcr, int prim, int nroots, int pad)
 {
-	RS *rs;
-
-	rs = init_rs_char(symsize, gfpoly, fcr, prim, nroots, pad);
-	if(rs == NULL) return NULL;
-
-	return &srs;
+	return init_rs_char(symsize, gfpoly, fcr, prim, nroots, pad);
 }
 
 /* The guts of the Reed-Solomon encoder, meant to be #included
@@ -221,7 +209,7 @@ RS *init_rs(int symsize, int gfpoly, int fcr, int prim, int nroots, int pad)
 #undef A0
 #define A0 (NN) /* Special reserved value encoding zero in index form */
 
-void encode_rs_char(RS *rs, const data_t *data, data_t *parity)
+void encode_rs_char(const data_t *data, data_t *parity)
 {
   int i, j;
   data_t feedback;

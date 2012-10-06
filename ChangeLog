@@ -1,6 +1,9 @@
 2012.10.05 Kentaro FUKUCHI <kentaro@fukuchi.org>
 	* qrencode.c:
 	  - FrameFiller is now allocated in stack, not heap.
+	  - MQRRawCode has been simplified.
+	* rscode.[ch]:
+	  - Internal API has been changed.
 
 2012.09.29 Kentaro FUKUCHI <kentaro@fukuchi.org>
 	* bstream.h:
