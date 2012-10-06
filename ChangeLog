@@ -1,3 +1,7 @@
+2012.10.05 Kentaro FUKUCHI <kentaro@fukuchi.org>
+	* qrencode.c:
+	  - FrameFiller is now allocated in stack, not heap.
+
 2012.09.29 Kentaro FUKUCHI <kentaro@fukuchi.org>
 	* bstream.h:
 	  - Added a new function "BitStream_reset()".
